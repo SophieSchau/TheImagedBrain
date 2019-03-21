@@ -224,9 +224,8 @@ while 1
         imp_single=real(ifftshift(ifftn(ifftshift(imp_single_fft))));
         %Plot image
         subplot(1,2,1);imagesc(imp_single); axis image; axis off
-        title('Add this wave...','fontsize', 30)
+        title('Add this wa
         subplot(1,2,2);imagesc(imp_trunc);  axis image; axis off
-        title('Total','fontsize', 30)
         ein_loop=ein_loop+1+n;
         %if ein_loop>=size(imp_fft,1)
         %    ein_loop=size(imp_fft,1);
