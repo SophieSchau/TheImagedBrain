@@ -1,6 +1,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main script to run whilst running the stall (The Imaged Brain)
 %
+% Recquires MATLAB Support Package for USB Webcams
+%
 % Sophie Schauman, Benjamin Tendler, Stuart Clare
 % 2019
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -9,6 +11,8 @@ clear all
 
 global KEY_PRESSED
 
+
+% Choose camera to use
 camlist=webcamlist;
 for n=1:length(camlist)
     fprintf("%d %s\n",n,camlist{n});
@@ -16,93 +20,45 @@ end
 n=input('Select camera...');
 cam = webcam(n); 
 
+% setup window
+
 hFigure=figure('WindowStyle','Normal','MenuBar', 'none', 'ToolBar', 'none');
-
 set(hFigure,'WindowState','FullScreen');
-
-
-
 set(hFigure, 'KeyPressFcn', @myKeyPressFcn);
-
-
-
 dim  = [0,0,0.5,0.5];
-
 han = annotation(hFigure, 'textbox', dim, 'String', '(s)etup   (f)ourier transform   (t)eaching tool (w)aves (r)eset waves  (q)uit', ...
     'VerticalAlignment', 'bottom', 'FitBoxToText', 'on', 'fontsize',18);
 
-
-
-mode='s'
+mode='s'; %setup
 
 %%
-%Read in einstein image and perform fourier transforms
-%%
-%Read in einstein image and perform fourier transforms
-imp=rgb2gray(imread('Einstein_square.jpg'));
-img_var=0;
-%Set empty arrays
-imp_trunc_fft=zeros(size(imp));
-imp_trunc_img=zeros(size(imp));
-%Define spiral index of image
-spiral_mat=spiral(size(imp,1));
-%Get centre of k space by circshifting
-spiral_mat=circshift(spiral_mat,[1,1]);
-%Perform fourier transform of input data
-imp_fft=fftshift(fftn(fftshift(imp)));
-ein_loop=0;
-n=0;
 
-
-while 1
+while 1 % programme running - check for key presses
     
-    if KEY_PRESSED == 's'
+    if KEY_PRESSED == 's' %SETUP
         
         mode='s'
         
-    elseif KEY_PRESSED == 'f'
+    elseif KEY_PRESSED == 'f' %FOURIER
         
         mode='f'
         
-    elseif KEY_PRESSED == 't'
+    elseif KEY_PRESSED == 't' %TEACHING
         
         mode='t'
         
-    elseif KEY_PRESSED == 'w' % EINSTEIN
+    elseif KEY_PRESSED == 'w' % WAVES
         
-        mode='w';
+        mode='w'
         
-    elseif KEY_PRESSED == 'r' % RESET EINSTEIN
-       
-        KEY_PRESSED = 'w';
-        if img_var==0
-            imp=rgb2gray(imread('zebra.jpg'));   
-        elseif img_var==1
-            imp=rgb2gray(imread('smilelaugh.jpg'));  
-        elseif img_var==2
-            imp=rgb2gray(imread('MRI_blackandwhite.png'));  
-            imp=imp(:,round(end/2-size(imp)/2):round(end/2+size(imp)/2)-1);
-        elseif img_var>=3
-            imp=rgb2gray(imread('Einstein_square.jpg'));
-            img_var=0;
-        end
-        img_var=img_var+1;
-        %Set empty arrays
-        imp_trunc_fft=zeros(size(imp));
-        imp_trunc_img=zeros(size(imp));
-        %Define spiral index of image
-        spiral_mat=spiral(size(imp,1));
-        %Get centre of k space by circshifting
-        spiral_mat=circshift(spiral_mat,[1,1]);
-        %Perform fourier transform of input data
-        imp_fft=fftshift(fftn(fftshift(imp)));
-        ein_loop=0;
-        n=0;
+    elseif KEY_PRESSED == 'r' % RESET WAVES
+        mode ='r'
+
         
-    elseif KEY_PRESSED == 'g'
+    elseif KEY_PRESSED == 'g' % GRAYSCALE
         colormap gray
         
-    elseif KEY_PRESSED == 'c'
+    elseif KEY_PRESSED == 'c' % COLOURMAP DEFAULT
         colormap default
         
         
@@ -115,6 +71,7 @@ while 1
     
     if mode == 's' % SETUP
         
+        % view camera to set up FOV, angle, etc..
         subplot(1,1,1)
         
         img = snapshot(cam);
@@ -125,6 +82,24 @@ while 1
         
         drawnow
         
+        % setup for waves demo
+        
+        if ~exist('img_var','var') % only first time
+            img_var = 0;
+            imp=rgb2gray(imread('Einstein_square.jpg'));
+            %Set empty arrays
+            imp_trunc_fft=zeros(size(imp));
+            imp_trunc_img=zeros(size(imp));
+            %Define spiral index of image
+            spiral_mat=spiral(size(imp,1));
+            %Get centre of k space by circshifting
+            spiral_mat=circshift(spiral_mat,[1,1]);
+            %Perform fourier transform of input data
+            imp_fft=fftshift(fftn(fftshift(imp)));
+            ein_loop=0;
+            n=0;
+        end
+        
     end
     
     
@@ -133,7 +108,7 @@ while 1
         
         img = snapshot(cam);
         
-        simg = img(85:85+550,250:250+780,:);
+        simg = img(85:85+550,250:250+780,:); % crop based on the rectangle in setup
         
         subplot(1,2,1)
         
@@ -146,12 +121,12 @@ while 1
         title('Camera','fontsize',30)
         
         subplot(1,2,2)
-        simg=imresize(single(simg),0.5);
-        simg_demeaned = simg(:,:,1:2)- mean(mean(mean(simg(:,:,1:2))));
-        simg_demeaned=simg_demeaned./max(simg_demeaned(:));
-        complex_in = single(simg_demeaned(:,:,1)) + 1i*single(simg_demeaned(:,:,2));
-        plot_img=((fftshift(abs((ifft2(fftshift(complex_in)))))));
-        imagesc(plot_img(round(end/2-25):round(end/2+25),round(end/2-25):round(end/2+25)))
+        simg=imresize(single(simg),0.5); % fewer pixels
+        simg_demeaned = simg(:,:,1:2)- mean(mean(mean(simg(:,:,1:2)))); % de-mean
+        simg_demeaned=simg_demeaned./max(simg_demeaned(:)); % normalise
+        complex_in = single(simg_demeaned(:,:,1)) + 1i*single(simg_demeaned(:,:,2)); % red channel for real part, green channel for imaginary part
+        plot_img=((fftshift(abs((ifft2(fftshift(complex_in))))))); %fourier transform
+        imagesc(plot_img(round(end/2-25):round(end/2+25),round(end/2-25):round(end/2+25))) %restricted FOV for visualisation
         axis image;
         
         axis off;
@@ -163,7 +138,7 @@ while 1
     
     
     
-    if mode == 't' % TEACHING TOOL
+    if mode == 't' % TEACHING TOOL (same as fourier, but with line showing 1D FT)
         
         img = snapshot(cam);
         
@@ -194,7 +169,7 @@ while 1
         axis off;
         
         hold on
-        line([1,51],[26,26],'color', [1 0 0], 'linewidth', 5)
+        line([1,51],[27,27],'color', [1 0 0], 'linewidth', 5)
         hold off
         
         title('Transformed','fontsize',30)
@@ -238,6 +213,33 @@ while 1
         end
         w=waitforbuttonpress;
         
+    end
+    
+    if mode == 'r' %reset waves
+        if img_var==0
+            imp=rgb2gray(imread('zebra.jpg'));   
+        elseif img_var==1
+            imp=rgb2gray(imread('smilelaugh.jpg'));  
+        elseif img_var==2
+            imp=rgb2gray(imread('MRI_blackandwhite.png'));  
+            imp=imp(:,round(end/2-size(imp)/2):round(end/2+size(imp)/2)-1);
+        elseif img_var>=3
+            imp=rgb2gray(imread('Einstein_square.jpg'));
+            img_var=0;
+        end
+        img_var=img_var+1;
+        %Set empty arrays
+        imp_trunc_fft=zeros(size(imp));
+        imp_trunc_img=zeros(size(imp));
+        %Define spiral index of image
+        spiral_mat=spiral(size(imp,1));
+        %Get centre of k space by circshifting
+        spiral_mat=circshift(spiral_mat,[1,1]);
+        %Perform fourier transform of input data
+        imp_fft=fftshift(fftn(fftshift(imp)));
+        ein_loop=0;
+        n=0;
+        KEY_PRESSED = 'w';
     end
     
 end
