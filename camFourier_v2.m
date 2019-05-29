@@ -37,22 +37,22 @@ while 1 % programme running - check for key presses
     
     if KEY_PRESSED == 's' %SETUP
         
-        mode='s'
+        mode='s';
         
     elseif KEY_PRESSED == 'f' %FOURIER
         
-        mode='f'
+        mode='f';
         
     elseif KEY_PRESSED == 't' %TEACHING
         
-        mode='t'
+        mode='t';
         
     elseif KEY_PRESSED == 'w' % WAVES
         
-        mode='w'
+        mode='w';
         
     elseif KEY_PRESSED == 'r' % RESET WAVES
-        mode ='r'
+        mode ='r';
 
         
     elseif KEY_PRESSED == 'g' % GRAYSCALE
@@ -144,47 +144,28 @@ while 1 % programme running - check for key presses
         
         simg = img(85:85+550,250:250+780,:);
         
-        subplot(2,2,1)
+        subplot(1,2,1)
         
         imagesc(rgb2gray(imresize(simg,0.5)))
         hold on
         line([1,391],[138,138],'color', [1 0 0], 'linewidth', 5)
-        hold off
-        
+        hold off  
         axis image;
-        
         axis off;
         
         title('Camera','fontsize',30)
         
-        subplot(2,2,2)
-        simg=imresize(single(simg),0.5);
-        simg_demeaned = simg(:,:,1:2)- mean(mean(mean(simg(:,:,1:2))));
-        simg_demeaned=simg_demeaned./max(simg_demeaned(:));
-        complex_in = single(simg_demeaned(:,:,1)) + 1i*single(simg_demeaned(:,:,2));
-        plot_img=((fftshift(abs((ifft2(fftshift(complex_in)))))));
-        imagesc(plot_img(round(end/2-25):round(end/2+25),round(end/2-25):round(end/2+25)))
-        axis image;
-        
-        axis off;
-        
-        hold on
-        line([1,51],[27,27],'color', [1 0 0], 'linewidth', 5)
-        hold off
-        
-        title('Transformed','fontsize',30)
-        
-        
-        
-        subplot(2,2,3)
+        subplot(1,2,2)
         plot(simg(round(end/2), :,1), 'r', 'LineWidth', 5);
+        ylabel('lightness')
+        yticks([0,255])
+        axis([0 800 0 255])
+        yticklabels({'black', 'white'})
+        xticks([])
+        set(gca,'Position', [0.5703 0.300 0.3347 0.5])
+        set(gca, 'FontSize', 24)
         drawnow
-        
-        subplot(2,2,4)
-        plot(plot_img(round(end/2),round(end/2-25):round(end/2+25)), 'r', 'LineWidth', 5);
-        drawnow
-        
-        
+ 
     end
     
     if mode == 'w' % waves
